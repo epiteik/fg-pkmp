@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penghuni - Bus 1 & Bus 2 | Puskesmas Pringgabaya</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bus1-color: #06b6d4;
+            --bus1-glow: rgba(6, 182, 212, 0.45);
+            --bus2-color: #a855f7;
+            --bus2-glow: rgba(168, 85, 247, 0.45);
+            --checked-color: #10b981;
+        }
+
+        body {
+            background-color: #050814;
+            color: #f8fafc;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        /* Animated Aurora Background */
+        .aurora-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background: 
+                radial-gradient(circle at 15% 20%, rgba(6, 182, 212, 0.16) 0%, transparent 45%),
+                radial-gradient(circle at 85% 25%, rgba(168, 85, 247, 0.16) 0%, transparent 45%),
+                radial-gradient(circle at 50% 85%, rgba(16, 185, 129, 0.1) 0%, transparent 50%);
+            animation: auroraPulse 12s ease-in-out infinite alternate;
+        }
+
+        @keyframes auroraPulse {
+            0% { transform: scale(1) translate(0, 0); }
+            50% { transform: scale(1.08) translate(1%, -1%); }
+            100% { transform: scale(1) translate(-1%, 1%); }
+        }
+
+        /* Animated Grid Overlay */
+        .grid-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-size: 36px 36px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+            mask-image: radial-gradient(circle at center, black 55%, transparent 100%);
+        }
+
+        /* Glassmorphism Containers */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .bus1-panel {
+            border-top: 2px solid rgba(6, 182, 212, 0.6);
+            box-shadow: 0 10px 40px -10px rgba(6, 182, 212, 0.15);
+        }
+
+        .bus2-panel {
+            border-top: 2px solid rgba(168, 85, 247, 0.6);
+            box-shadow: 0 10px 40px -10px rgba(168, 85, 247, 0.15);
+        }
+
+        /* Staggered Card Reveal Motion */
+        @keyframes cardEntrance {
+            0% {
+                opacity: 0;
+                transform: translateY(18px) scale(0.92);
+                filter: blur(4px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                filter: blur(0);
+            }
+        }
+
+        .passenger-card {
+            opacity: 0;
+            animation: cardEntrance 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            animation-delay: var(--delay, 0ms);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Shimmer effect on cards */
+        .passenger-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.08),
+                transparent
+            );
+            transform: skewX(-20deg);
+            transition: left 0.6s ease;
+            pointer-events: none;
+        }
+
+        .passenger-card:hover::before {
+            left: 150%;
+        }
+
+        .passenger-card.bus1-card:hover {
+            transform: translateY(-2px) scale(1.02);
+            border-color: rgba(6, 182, 212, 0.6);
+            box-shadow: 0 4px 18px rgba(6, 182, 212, 0.22);
+            background: rgba(6, 182, 212, 0.12);
+        }
+
+        .passenger-card.bus2-card:hover {
+            transform: translateY(-2px) scale(1.02);
+            border-color: rgba(168, 85, 247, 0.6);
+            box-shadow: 0 4px 18px rgba(168, 85, 247, 0.22);
+            background: rgba(168, 85, 247, 0.12);
+        }
+
+        /* Checked-in State */
+        .passenger-card.is-checked {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.08) 100%) !important;
+            border-color: rgba(16, 185, 129, 0.65) !important;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+        }
+
+        /* Spotlight TV Mode Effect */
+        @keyframes spotlightPulse {
+            0%, 100% { transform: scale(1.04); }
+            50% { transform: scale(1.06); }
+        }
+
+        .passenger-card.spotlight-active-1 {
+            border-color: #22d3ee !important;
+            background: rgba(6, 182, 212, 0.28) !important;
+            box-shadow: 0 0 25px rgba(6, 182, 212, 0.55) !important;
+            z-index: 20;
+            animation: cardEntrance 0.55s forwards, spotlightPulse 1.5s infinite ease-in-out;
+        }
+
+        .passenger-card.spotlight-active-2 {
+            border-color: #c084fc !important;
+            background: rgba(168, 85, 247, 0.28) !important;
+            box-shadow: 0 0 25px rgba(168, 85, 247, 0.55) !important;
+            z-index: 20;
+            animation: cardEntrance 0.55s forwards, spotlightPulse 1.5s infinite ease-in-out;
+        }
+
+        /* Search Dimmed State */
+        .passenger-card.dimmed {
+            opacity: 0.15 !important;
+            transform: scale(0.95);
+            filter: grayscale(90%);
+            pointer-events: none;
+        }
+
+        .passenger-card.search-match {
+            border-color: #facc15 !important;
+            box-shadow: 0 0 20px rgba(250, 204, 21, 0.35) !important;
+            background: rgba(250, 204, 21, 0.15) !important;
+        }
+
+        /* Animated Bus Route Line */
+        @keyframes moveBus {
+            0% { left: -5%; }
+            100% { left: 105%; }
+        }
+        .bus-moving-icon {
+            position: absolute;
+            top: -9px;
+            animation: moveBus 14s linear infinite;
+        }
+        .bus-moving-icon-2 {
+            position: absolute;
+            top: -9px;
+            animation: moveBus 16s linear infinite;
+            animation-delay: -6s;
+        }
+
+        /* Floating Particles Canvas */
+        #particleCanvas {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Custom Scrollbar for mobile if needed */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #050814;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="min-h-screen lg:h-screen lg:overflow-hidden flex flex-col justify-between p-2 sm:p-3 lg:p-4 relative">
+
+    <!-- Background Visuals -->
+    <div class="aurora-bg"></div>
+    <div class="grid-overlay"></div>
+    <canvas id="particleCanvas"></canvas>
+
+    <!-- HEADER & CONTROL BAR -->
+    <header class="glass-panel rounded-2xl px-3 py-2.5 sm:px-5 sm:py-3 mb-2.5 lg:mb-3 shrink-0 z-10">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5">
+            
+            <!-- Title & Live Badge -->
+            <div class="flex items-center justify-between lg:justify-start gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="relative flex items-center justify-center w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500/25 via-cyan-500/20 to-purple-600/20 border border-emerald-400/30 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+                        <svg class="w-5 h-5 text-emerald-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        <span class="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                        </span>
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-0.5">
+                            <span class="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-gradient-to-r from-emerald-500/20 via-cyan-500/20 to-emerald-500/20 text-emerald-300 border border-emerald-400/35 shadow-[0_0_12px_rgba(16,185,129,0.25)]">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                PUSKESMAS PRINGGABAYA
+                            </span>
+                            <span class="hidden sm:inline-block text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
+                                LIVE BOARD
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-base sm:text-lg lg:text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-cyan-200 to-purple-300 bg-clip-text text-transparent">
+                                PENGHUNI BUS - FAMILY GATHERING
+                            </h1>
+                        </div>
+                        <p class="text-[11px] text-slate-400">
+                            Klik nama untuk tandai kehadiran • Semua daftar tampil dalam 1 layar utuh
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Mobile Counter Summary -->
+                <div class="flex lg:hidden items-center gap-1.5 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-white/10">
+                    <span class="text-[10px] text-slate-400">Total:</span>
+                    <span class="text-xs font-mono font-bold text-white" id="mobileTotalCounter">93</span>
+                </div>
+            </div>
+
+            <!-- Stats Counters (Desktop & Tablet) -->
+            <div class="grid grid-cols-4 gap-2 sm:gap-3">
+                <!-- Total -->
+                <div class="bg-slate-900/70 border border-white/10 rounded-xl px-2.5 py-1.5 flex items-center gap-2">
+                    <div class="w-2 h-6 rounded-full bg-gradient-to-b from-cyan-400 to-purple-500"></div>
+                    <div>
+                        <div class="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Total</div>
+                        <div class="text-sm sm:text-base font-mono font-bold text-white leading-tight">
+                            <span id="statTotal">0</span> <span class="text-[10px] font-normal text-slate-400">Org</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Bus 1 -->
+                <div class="bg-cyan-950/30 border border-cyan-500/25 rounded-xl px-2.5 py-1.5 flex items-center gap-2">
+                    <div class="w-2 h-6 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></div>
+                    <div>
+                        <div class="text-[10px] uppercase tracking-wider text-cyan-300/80 font-medium">Bus 1</div>
+                        <div class="text-sm sm:text-base font-mono font-bold text-cyan-300 leading-tight">
+                            <span id="statBus1">0</span> <span class="text-[10px] font-normal text-cyan-400/70">Kursi</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Bus 2 -->
+                <div class="bg-purple-950/30 border border-purple-500/25 rounded-xl px-2.5 py-1.5 flex items-center gap-2">
+                    <div class="w-2 h-6 rounded-full bg-purple-400 shadow-[0_0_8px_#c084fc]"></div>
+                    <div>
+                        <div class="text-[10px] uppercase tracking-wider text-purple-300/80 font-medium">Bus 2</div>
+                        <div class="text-sm sm:text-base font-mono font-bold text-purple-300 leading-tight">
+                            <span id="statBus2">0</span> <span class="text-[10px] font-normal text-purple-400/70">Kursi</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Hadir / Check-in -->
+                <div class="bg-emerald-950/30 border border-emerald-500/25 rounded-xl px-2.5 py-1.5 flex items-center gap-2">
+                    <div class="w-2 h-6 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]"></div>
+                    <div>
+                        <div class="text-[10px] uppercase tracking-wider text-emerald-300/80 font-medium">Hadir</div>
+                        <div class="text-sm sm:text-base font-mono font-bold text-emerald-300 leading-tight">
+                            <span id="statChecked">0</span><span class="text-xs text-emerald-400/60">/93</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Controls: Search & Motion Buttons -->
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Search Input -->
+                <div class="relative flex-1 sm:flex-initial sm:w-48 md:w-56">
+                    <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        placeholder="Cari nama / no urut..." 
+                        class="w-full bg-slate-900/90 text-xs sm:text-sm text-white placeholder-slate-400 pl-9 pr-7 py-1.5 rounded-xl border border-white/10 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition"
+                    >
+                    <button id="clearSearchBtn" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                        ✕
+                    </button>
+                </div>
+
+                <!-- Spotlight / TV Display Mode -->
+                <button id="btnSpotlight" onclick="toggleSpotlightMode()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-cyan-500/20 to-purple-500/20 hover:from-cyan-500/30 hover:to-purple-500/30 text-cyan-200 border border-cyan-400/30 flex items-center gap-1.5 transition active:scale-95 shadow-sm">
+                    <span id="spotlightDot" class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                    <span id="spotlightText">Auto-Highlight: ON</span>
+                </button>
+
+                <!-- Replay Entrance Animation -->
+                <button onclick="replayMotion()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 border border-white/10 flex items-center gap-1.5 transition active:scale-95" title="Putar Ulang Animasi Masuk">
+                    <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>Replay Motion</span>
+                </button>
+
+                <!-- Check-in Reset / Check All -->
+                <button onclick="resetCheckIn()" class="px-2.5 py-1.5 rounded-xl text-xs font-medium bg-slate-900/70 hover:bg-rose-950/50 text-slate-400 hover:text-rose-300 border border-white/10 hover:border-rose-500/30 transition active:scale-95" title="Reset Status Kehadiran">
+                    Reset
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT: SIDE-BY-SIDE BUS 1 & BUS 2 (NO PAGINATION / SINGLE PAGE) -->
+    <main class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4 min-h-0 z-10">
+        
+        <!-- ==================== BUS 1 PANEL ==================== -->
+        <section class="glass-panel bus1-panel rounded-2xl p-3 sm:p-4 flex flex-col justify-between relative overflow-hidden">
+            <!-- Top Glow Accent -->
+            <div class="absolute -top-12 -left-12 w-40 h-40 bg-cyan-500/15 rounded-full blur-2xl pointer-events-none"></div>
+
+            <!-- Bus 1 Header -->
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2.5">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 font-mono font-bold text-sm shadow-[0_0_15px_rgba(6,182,212,0.3)]">
+                            01
+                        </span>
+                        <div>
+                            <h2 class="text-sm sm:text-base font-extrabold tracking-wide text-white flex items-center gap-2">
+                                BUS 1
+                                <span class="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                                    47 Penumpang
+                                </span>
+                            </h2>
+                        </div>
+                    </div>
+
+                    <!-- Bus 1 Check-in Progress -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-[11px] text-slate-400">Hadir: <strong id="bus1CheckedCount" class="text-cyan-300 font-mono">0/47</strong></span>
+                        <button onclick="checkAllBus(1)" class="text-[10px] px-2 py-0.5 rounded bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 transition">
+                            Semua Hadir
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Animated Bus 1 Route Track -->
+                <div class="relative w-full h-1 bg-slate-800 rounded-full my-2 overflow-visible">
+                    <div id="bus1ProgressBar" class="h-full bg-gradient-to-r from-cyan-500 to-emerald-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    <div class="bus-moving-icon text-cyan-400 drop-shadow-[0_0_6px_rgba(6,182,212,0.9)]">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bus 1 Passenger Grid (47 Items Compact) -->
+            <div id="bus1Grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5 sm:gap-1.5 my-auto py-1">
+                <!-- Populated by JavaScript -->
+            </div>
+        </section>
+
+        <!-- ==================== BUS 2 PANEL ==================== -->
+        <section class="glass-panel bus2-panel rounded-2xl p-3 sm:p-4 flex flex-col justify-between relative overflow-hidden">
+            <!-- Top Glow Accent -->
+            <div class="absolute -top-12 -right-12 w-40 h-40 bg-purple-500/15 rounded-full blur-2xl pointer-events-none"></div>
+
+            <!-- Bus 2 Header -->
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2.5">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-400/40 text-purple-300 font-mono font-bold text-sm shadow-[0_0_15px_rgba(168,85,247,0.3)]">
+                            02
+                        </span>
+                        <div>
+                            <h2 class="text-sm sm:text-base font-extrabold tracking-wide text-white flex items-center gap-2">
+                                BUS 2
+                                <span class="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                                    46 Penumpang
+                                </span>
+                            </h2>
+                        </div>
+                    </div>
+
+                    <!-- Bus 2 Check-in Progress -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-[11px] text-slate-400">Hadir: <strong id="bus2CheckedCount" class="text-purple-300 font-mono">0/46</strong></span>
+                        <button onclick="checkAllBus(2)" class="text-[10px] px-2 py-0.5 rounded bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 transition">
+                            Semua Hadir
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Animated Bus 2 Route Track -->
+                <div class="relative w-full h-1 bg-slate-800 rounded-full my-2 overflow-visible">
+                    <div id="bus2ProgressBar" class="h-full bg-gradient-to-r from-purple-500 to-emerald-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    <div class="bus-moving-icon-2 text-purple-400 drop-shadow-[0_0_6px_rgba(168,85,247,0.9)]">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bus 2 Passenger Grid (46 Items Compact) -->
+            <div id="bus2Grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5 sm:gap-1.5 my-auto py-1">
+                <!-- Populated by JavaScript -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER / TICKER -->
+    <footer class="mt-2 flex flex-col sm:flex-row items-center justify-between gap-1.5 text-[11px] text-slate-400 px-2 shrink-0 z-10">
+        <div class="flex flex-wrap items-center justify-center gap-3">
+            <span class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-cyan-400"></span> Bus 1 (No. 1 - 47)
+            </span>
+            <span class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-purple-400"></span> Bus 2 (No. 1 - 46)
+            </span>
+            <span class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Sudah Check-in
+            </span>
+        </div>
+        <div class="flex items-center gap-2.5">
+            <span class="font-mono text-[10px] text-slate-500 hidden md:inline-block">
+                PUSKESMAS PRINGGABAYA • SINGLE VIEW EDITION
+            </span>
+            <span class="hidden md:inline-block text-slate-700">|</span>
+            <div class="font-mono text-[11px] px-2.5 py-0.5 rounded-full bg-slate-900/90 border border-cyan-500/30 text-slate-300 shadow-[0_0_12px_rgba(6,182,212,0.18)] flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+                <span>created by <strong class="bg-gradient-to-r from-cyan-300 to-purple-400 bg-clip-text text-transparent font-bold tracking-wider">zer0</strong></span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // ==========================================
+        // 1. DATA PENUMPANG LENGKAP
+        // ==========================================
+        const bus1Passengers = [
+            "Yuliana", "Caca Anak", "Ruri A.", "Anan. Anak",
+            "Sartini", "Husniah", "Supu", "Riska",
+            "Wulan", "Anak Wulan", "Sri Leni", "dr. Ida",
+            "dr. Arista", "Lisa", "Laila Q", "Tatang",
+            "Pandi", "Anak Pandi", "Pingki", "Kamil",
+            "Hurnaen", "Beni", "Mik Pikri", "Dika",
+            "Istri Dika", "Ria N.", "Nova", "Eny",
+            "Nelin", "Nila W", "Fina", "Ruli",
+            "Desi", "Ginda", "Hastuti", "Eka MS",
+            "Meti", "Nanda", "Farida", "Anak Farida",
+            "Gempa", "Wiwin", "Septiana R", "Alpina",
+            "Enong", "Tim Fotografer", "Marzuki"
+        ];
+
+        const bus2Passengers = [
+            "Kapaus", "Istri Kapaus", "H. Jabar", "Hj. Emi",
+            "Suci Hidayat", "Hamzani", "Sri Mulyani", "Nirwana",
+            "Anak Nir.", "Indah", "Ari", "Rinayu",
+            "Novia LN", "Nurmasni", "Anak Nurmasni", "Ida Rohyani",
+            "Sumaya", "Dini P.", "Odah", "Nanis",
+            "Buhari", "Kamariah", "Ziadahul. L", "Ana",
+            "Emi Sartika", "Yulfia", "Bq. Hulyati", "Fuad",
+            "Joko", "Anak Joko", "Asmawati", "Yulianti",
+            "Tini", "Anak Tini", "Dewi", "Lini",
+            "Tomy", "BQ. Fat", "Nopianti", "Fujianti",
+            "Winarni", "Septina", "Gita", "Anak Gita",
+            "Lia", "M. Asri"
+        ];
+
+        // LocalStorage State for Check-In
+        const STORAGE_KEY = 'manifest_bus_checked_v1';
+        let checkedState = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+
+        // Auto-Spotlight TV Mode State
+        let spotlightEnabled = true;
+        let spotlightInterval = null;
+        let currentSpotlightIndex = 0;
+
+        // ==========================================
+        // 2. RENDER CARDS & STAGGERED ANIMATION
+        // ==========================================
+        function createPassengerCard(name, index, busNumber) {
+            const num = index + 1;
+            const id = `bus${busNumber}_${num}`;
+            const isChecked = !!checkedState[id];
+            const delayMs = index * 22; // Staggered cascade timing
+
+            // Special badge detection (Doctor, Kids, Photographer, Haji)
+            let badgeHtml = '';
+            const lower = name.toLowerCase();
+            if (lower.startsWith('dr.')) {
+                badgeHtml = `<span class="text-[9px] px-1 rounded bg-sky-500/20 text-sky-300 border border-sky-400/30 shrink-0">Medis</span>`;
+            } else if (lower.includes('fotografer')) {
+                badgeHtml = `<span class="text-[9px] px-1 rounded bg-amber-500/20 text-amber-300 border border-amber-400/30 shrink-0">Media</span>`;
+            }
+
+            const card = document.createElement('div');
+            card.id = `card_${id}`;
+            card.dataset.name = name.toLowerCase();
+            card.dataset.num = String(num);
+            card.dataset.bus = String(busNumber);
+            card.style.setProperty('--delay', `${delayMs}ms`);
+
+            const busThemeClass = busNumber === 1 
+                ? 'bus1-card bg-slate-900/75 border-cyan-500/20' 
+                : 'bus2-card bg-slate-900/75 border-purple-500/20';
+
+            const badgeThemeClass = busNumber === 1
+                ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30'
+                : 'bg-purple-500/15 text-purple-300 border-purple-500/30';
+
+            card.className = `passenger-card ${busThemeClass} ${isChecked ? 'is-checked' : ''} border rounded-lg px-2 py-1.5 flex items-center justify-between gap-1.5 cursor-pointer select-none`;
+
+            card.innerHTML = `
+                <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                    <span class="num-badge font-mono text-[10px] font-bold w-5 h-5 rounded flex items-center justify-center border shrink-0 transition-colors ${isChecked ? 'bg-emerald-500 text-slate-950 border-emerald-400' : badgeThemeClass}">
+                        ${num}
+                    </span>
+                    <span class="text-xs sm:text-[13px] font-semibold text-slate-100 truncate leading-tight" title="${num}. ${name}">
+                        ${name}
+                    </span>
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                    ${badgeHtml}
+                    <span class="check-icon w-3.5 h-3.5 rounded-full flex items-center justify-center transition-transform duration-200 ${isChecked ? 'scale-100 text-emerald-400' : 'scale-0 text-transparent'}">
+                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                    </span>
+                </div>
+            `;
+
+            card.addEventListener('click', (e) => toggleCheckIn(id, card, busNumber, e));
+            return card;
+        }
+
+        function renderAllGrids() {
+            const bus1Grid = document.getElementById('bus1Grid');
+            const bus2Grid = document.getElementById('bus2Grid');
+
+            bus1Grid.innerHTML = '';
+            bus2Grid.innerHTML = '';
+
+            bus1Passengers.forEach((name, idx) => {
+                bus1Grid.appendChild(createPassengerCard(name, idx, 1));
+            });
+
+            bus2Passengers.forEach((name, idx) => {
+                bus2Grid.appendChild(createPassengerCard(name, idx, 2));
+            });
+
+            // Add subtle placeholder info card in Bus 2 slot 47 & 48 for visual balance
+            const summarySlot = document.createElement('div');
+            summarySlot.style.setProperty('--delay', `${46 * 22}ms`);
+            summarySlot.className = `passenger-card col-span-2 bg-gradient-to-r from-purple-950/40 to-cyan-950/40 border border-dashed border-purple-400/25 rounded-lg px-2.5 py-1.5 flex items-center justify-between text-[11px] text-purple-200/80`;
+            summarySlot.innerHTML = `
+                <span class="flex items-center gap-1.5 font-medium">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Manifest Lengkap Bus 2
+                </span>
+                <span class="font-mono text-[10px] text-purple-300 font-bold">Total: 46 Orang</span>
+            `;
+            bus2Grid.appendChild(summarySlot);
+
+            // Also 1 slot in Bus 1 to fill 48 grid cells (47 passengers + 1 status badge)
+            const summarySlot1 = document.createElement('div');
+            summarySlot1.style.setProperty('--delay', `${47 * 22}ms`);
+            summarySlot1.className = `passenger-card bg-gradient-to-r from-cyan-950/40 to-slate-900/40 border border-dashed border-cyan-400/25 rounded-lg px-2 py-1.5 flex items-center justify-between text-[10px] text-cyan-200/80`;
+            summarySlot1.innerHTML = `
+                <span class="font-mono font-bold text-cyan-300">FULL 47</span>
+                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+            `;
+            bus1Grid.appendChild(summarySlot1);
+
+            updateStatistics();
+        }
+
+        // ==========================================
+        // 3. CHECK-IN INTERACTION & CONFETTI BURST
+        // ==========================================
+        function toggleCheckIn(id, cardEl, busNumber, event) {
+            checkedState[id] = !checkedState[id];
+            if (!checkedState[id]) delete checkedState[id];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(checkedState));
+
+            const isChecked = !!checkedState[id];
+            const numBadge = cardEl.querySelector('.num-badge');
+            const checkIcon = cardEl.querySelector('.check-icon');
+
+            if (isChecked) {
+                cardEl.classList.add('is-checked');
+                numBadge.className = 'num-badge font-mono text-[10px] font-bold w-5 h-5 rounded flex items-center justify-center border shrink-0 transition-colors bg-emerald-500 text-slate-950 border-emerald-400';
+                checkIcon.classList.remove('scale-0', 'text-transparent');
+                checkIcon.classList.add('scale-100', 'text-emerald-400');
+                spawnClickBurst(event.clientX, event.clientY, busNumber === 1 ? '#06b6d4' : '#a855f7');
+            } else {
+                cardEl.classList.remove('is-checked');
+                const badgeThemeClass = busNumber === 1
+                    ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30'
+                    : 'bg-purple-500/15 text-purple-300 border-purple-500/30';
+                numBadge.className = `num-badge font-mono text-[10px] font-bold w-5 h-5 rounded flex items-center justify-center border shrink-0 transition-colors ${badgeThemeClass}`;
+                checkIcon.classList.add('scale-0', 'text-transparent');
+                checkIcon.classList.remove('scale-100', 'text-emerald-400');
+            }
+
+            updateStatistics();
+        }
+
+        function checkAllBus(busNumber) {
+            const list = busNumber === 1 ? bus1Passengers : bus2Passengers;
+            const allAlreadyChecked = list.every((_, i) => checkedState[`bus${busNumber}_${i + 1}`]);
+
+            list.forEach((_, i) => {
+                const id = `bus${busNumber}_${i + 1}`;
+                if (allAlreadyChecked) {
+                    delete checkedState[id];
+                } else {
+                    checkedState[id] = true;
+                }
+            });
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(checkedState));
+            renderAllGrids();
+        }
+
+        function resetCheckIn() {
+            checkedState = {};
+            localStorage.removeItem(STORAGE_KEY);
+            renderAllGrids();
+        }
+
+        function updateStatistics() {
+            let bus1Count = 0;
+            let bus2Count = 0;
+
+            bus1Passengers.forEach((_, i) => {
+                if (checkedState[`bus1_${i + 1}`]) bus1Count++;
+            });
+            bus2Passengers.forEach((_, i) => {
+                if (checkedState[`bus2_${i + 1}`]) bus2Count++;
+            });
+
+            const totalChecked = bus1Count + bus2Count;
+
+            document.getElementById('statChecked').textContent = totalChecked;
+            document.getElementById('bus1CheckedCount').textContent = `${bus1Count}/47`;
+            document.getElementById('bus2CheckedCount').textContent = `${bus2Count}/46`;
+
+            document.getElementById('bus1ProgressBar').style.width = `${(bus1Count / 47) * 100}%`;
+            document.getElementById('bus2ProgressBar').style.width = `${(bus2Count / 46) * 100}%`;
+        }
+
+        // Micro Particle Burst on Click
+        function spawnClickBurst(x, y, color) {
+            for (let i = 0; i < 10; i++) {
+                const dot = document.createElement('div');
+                dot.style.position = 'fixed';
+                dot.style.left = `${x}px`;
+                dot.style.top = `${y}px`;
+                dot.style.width = '5px';
+                dot.style.height = '5px';
+                dot.style.borderRadius = '50%';
+                dot.style.backgroundColor = i % 2 === 0 ? '#10b981' : color;
+                dot.style.pointerEvents = 'none';
+                dot.style.zIndex = '9999';
+                document.body.appendChild(dot);
+
+                const angle = (Math.PI * 2 * i) / 10;
+                const velocity = 25 + Math.random() * 25;
+                const tx = Math.cos(angle) * velocity;
+                const ty = Math.sin(angle) * velocity;
+
+                dot.animate([
+                    { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                    { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
+                ], {
+                    duration: 500,
+                    easing: 'cubic-bezier(0, .9, .57, 1)'
+                }).onfinish = () => dot.remove();
+            }
+        }
+
+        // ==========================================
+        // 4. ANIMATED NUMBER COUNTERS & REPLAY MOTION
+        // ==========================================
+        function animateCounter(id, target, duration = 1200) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            let start = 0;
+            const stepTime = 16;
+            const steps = duration / stepTime;
+            const increment = target / steps;
+
+            const timer = setInterval(() => {
+                start += increment;
+                if (start >= target) {
+                    el.textContent = target;
+                    clearInterval(timer);
+                } else {
+                    el.textContent = Math.floor(start);
+                }
+            }, stepTime);
+        }
+
+        function replayMotion() {
+            const cards = document.querySelectorAll('.passenger-card');
+            cards.forEach(card => {
+                card.style.animation = 'none';
+                card.offsetHeight; // trigger reflow
+                card.style.animation = '';
+            });
+            animateCounter('statTotal', 93, 900);
+            animateCounter('statBus1', 47, 900);
+            animateCounter('statBus2', 46, 900);
+        }
+
+        // ==========================================
+        // 5. REAL-TIME SEARCH & HIGHLIGHT
+        // ==========================================
+        const searchInput = document.getElementById('searchInput');
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim().toLowerCase();
+            clearSearchBtn.classList.toggle('hidden', query.length === 0);
+
+            const cards = document.querySelectorAll('.passenger-card[data-name]');
+            cards.forEach(card => {
+                const name = card.dataset.name;
+                const num = card.dataset.num;
+                if (!query) {
+                    card.classList.remove('dimmed', 'search-match');
+                } else if (name.includes(query) || num === query) {
+                    card.classList.remove('dimmed');
+                    card.classList.add('search-match');
+                } else {
+                    card.classList.add('dimmed');
+                    card.classList.remove('search-match');
+                }
+            });
+        });
+
+        clearSearchBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            searchInput.dispatchEvent(new Event('input'));
+            searchInput.focus();
+        });
+
+        // ==========================================
+        // 6. AUTO-HIGHLIGHT / SPOTLIGHT TV MOTION
+        // ==========================================
+        function startSpotlightLoop() {
+            if (spotlightInterval) clearInterval(spotlightInterval);
+            spotlightInterval = setInterval(() => {
+                if (!spotlightEnabled || searchInput.value.trim() !== '') return;
+
+                // Clear previous spotlights
+                document.querySelectorAll('.spotlight-active-1, .spotlight-active-2').forEach(el => {
+                    el.classList.remove('spotlight-active-1', 'spotlight-active-2');
+                });
+
+                const idx1 = (currentSpotlightIndex % 47) + 1;
+                const idx2 = (currentSpotlightIndex % 46) + 1;
+
+                const card1 = document.getElementById(`card_bus1_${idx1}`);
+                const card2 = document.getElementById(`card_bus2_${idx2}`);
+
+                if (card1) card1.classList.add('spotlight-active-1');
+                if (card2) card2.classList.add('spotlight-active-2');
+
+                currentSpotlightIndex++;
+            }, 1800);
+        }
+
+        function toggleSpotlightMode() {
+            spotlightEnabled = !spotlightEnabled;
+            const dot = document.getElementById('spotlightDot');
+            const text = document.getElementById('spotlightText');
+
+            if (spotlightEnabled) {
+                dot.className = 'w-2 h-2 rounded-full bg-cyan-400 animate-ping';
+                text.textContent = 'Auto-Highlight: ON';
+            } else {
+                dot.className = 'w-2 h-2 rounded-full bg-slate-500';
+                text.textContent = 'Auto-Highlight: OFF';
+                document.querySelectorAll('.spotlight-active-1, .spotlight-active-2').forEach(el => {
+                    el.classList.remove('spotlight-active-1', 'spotlight-active-2');
+                });
+            }
+        }
+
+        // ==========================================
+        // 7. BACKGROUND FLOATING PARTICLES CANVAS
+        // ==========================================
+        function initParticles() {
+            const canvas = document.getElementById('particleCanvas');
+            const ctx = canvas.getContext('2d');
+            let width, height, particles;
+
+            function resize() {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            }
+
+            window.addEventListener('resize', resize);
+            resize();
+
+            particles = Array.from({ length: 35 }, () => ({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                r: Math.random() * 1.8 + 0.5,
+                vx: (Math.random() - 0.5) * 0.35,
+                vy: (Math.random() - 0.5) * 0.35,
+                color: Math.random() > 0.5 ? 'rgba(6, 182, 212, 0.35)' : 'rgba(168, 85, 247, 0.35)'
+            }));
+
+            function draw() {
+                ctx.clearRect(0, 0, width, height);
+                for (let p of particles) {
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    if (p.x < 0) p.x = width;
+                    if (p.x > width) p.x = 0;
+                    if (p.y < 0) p.y = height;
+                    if (p.y > height) p.y = 0;
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.fill();
+                }
+                requestAnimationFrame(draw);
+            }
+            draw();
+        }
+
+        // ==========================================
+        // INITIALIZE ON LOAD
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            renderAllGrids();
+            animateCounter('statTotal', 93, 1200);
+            animateCounter('statBus1', 47, 1000);
+            animateCounter('statBus2', 46, 1000);
+            startSpotlightLoop();
+            initParticles();
+        });
+    </script>
+</body>
+</html>
